@@ -1,0 +1,20 @@
+{
+  "name": "pulsecrypto",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "api": "pnpm --filter @pulsecrypto/api dev",
+    "mobile": "pnpm --filter mobile android"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.4.2",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.4.2",
+  "dependencies": {
+    "zod": "4.6.5"
+  }
+}
