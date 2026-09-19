@@ -13,7 +13,8 @@ per second.
 
 - `spread = bestAsk − bestBid`; `null` if either side is empty.
 - `buyPressure = 100 × Σ bidQty / (Σ bidQty + Σ askQty)` over the **10 displayed levels** per
-  side (spec assumption); `sellPressure = 100 − buyPressure`; both `null` when a side is empty.
+  side (spec assumption), rounded to 2 decimals on the server; `sellPressure = round2(100 − buyPressure)`;
+  both `null` when a side is empty. Rounding stops float noise from causing client commits.
 - `change24hPct` = ticker `P`, passed through, not recomputed.
 - `volume24h` = quote volume (`q`). `DISPLAY_LEVELS = 10` is a contracts constant, shared with the book UI.
 - The client computes only presentation: TOTAL = cumulative quantity; bar width = cumulative qty ÷
@@ -48,4 +49,5 @@ pressure over 20 levels (disagrees with what the user sees); `E` as the timestam
 
 ## Status
 
-Accepted. Requirements: CAP-7, CAP-10, NFR-7.
+Accepted. Amended 2026-09-19 (human-approved): 2-decimal pressure rounding, adopted from engineering
+guide §6.9. Requirements: CAP-7, CAP-10, NFR-7.

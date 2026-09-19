@@ -22,13 +22,16 @@ per interval.
   brief's `timestamp` is in seconds, ours is in ms, and the difference is documented.
 - `rev` is meaningful only within one connection.
 - `pair` is the only identity key, validated as `^[A-Z0-9]+$`. The pair list is server config, not an enum.
-- `/pairs/meta` → `{ pairs: Array<{ pair, displayName, tradingStatus: 'TRADING' | 'HALTED', high24h, low24h, volume24h }> }`.
+- `/pairs/meta` → `{ pairs: Array<{ pair, displayName, tradingStatus: 'TRADING' | 'HALTED', high24h, low24h, volume24h,
+  pricePrecision, quantityPrecision }> }`. The two precisions are integer decimal places for display,
+  from static config next to `displayName`; the wire never rounds prices or quantities.
 - Schemas use Zod's default `.strip()`. Additive fields are non-breaking and do not bump `v`.
 - `packages/contracts` (Zod 4.6.5) holds the schemas, `DISPLAY_LEVELS = 10`, `MAX_LEVELS = 20`,
   the default heartbeat, and `decodeServerMessage(raw: unknown)`. The decoder is the **only** place
   a server message is typed without a full parse. It full-parses in `__DEV__` and envelope-parses
   in production (engineering-standards §6).
 - `docs/contracts/websocket-protocol.md` is the single field reference, and the README links to it.
+  `docs/contracts/rest-api.md` is the REST equivalent.
   Schema, document and tests change together.
 
 ## Alternatives considered
@@ -50,5 +53,6 @@ per interval.
 
 ## Status
 
-Accepted (JSON adopted; message set defined here). The production envelope-only decode is the
+Accepted (JSON adopted; message set defined here). Amended 2026-09-19 (human-approved): `pricePrecision`
+and `quantityPrecision` added to `/pairs/meta`, an additive change with no `v` bump. The production envelope-only decode is the
 explicit exception recorded in AGENTS.md (approved 2026-09-19). Requirements: CAP-4, CAP-5, NFR-2, NFR-6.
