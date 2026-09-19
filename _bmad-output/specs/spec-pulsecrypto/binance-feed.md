@@ -5,7 +5,7 @@ Facts observed live on 2026-09-19 (walking-skeleton spike) or from Binance's pub
 ## Endpoint and combined streams
 
 - Combined stream URL: `wss://stream.binance.com:9443/stream?streams=<s1>/<s2>/...` (stream names lowercase, e.g. `btcusdt@depth20@100ms`).
-- Alternative market-data-only host: `wss://data-stream.binance.vision` (see the Open Question in SPEC.md). The host must be env-configurable.
+- Default host `wss://stream.binance.com:9443`, overridable through `BINANCE_WS_URL` (architecture §9). `wss://data-stream.binance.vision` is the market-data-only alternative for reviewers that get HTTP 451; the backend logs a 451 with this hint (ADR-008).
 - Every combined-stream message is wrapped as `{ "stream": "<name>", "data": { ... } }`.
 
 ## Stream payloads observed
