@@ -92,7 +92,7 @@ Technical requirements from the architecture, ADRs, standards, testing strategy 
 
 Toolchain and quality gates
 
-- **AR-1 (ADR-012, stack.md):** Keep the proven toolchain: pnpm 12.4.2 with `nodeLinker: hoisted` and `allowBuilds: { esbuild: true }`, `zod` pinned at the root, contracts exporting TS source with no build step, Metro `watchFolders=[workspaceRoot]`, `nodeModulesPaths=[app, root]`, `disableHierarchicalLookup=true`. Pin Node with `engines` and `.nvmrc` at `>=22.4 <23`.
+- **AR-1 (ADR-012, stack.md):** Keep the proven toolchain: pnpm 12.4.2 with `nodeLinker: hoisted` and `allowBuilds: { esbuild: true }`, `zod` pinned at the root, contracts exporting TS source with no build step, Metro `watchFolders=[workspaceRoot]`, `nodeModulesPaths=[app, root]`, `disableHierarchicalLookup=true`. Pin Node with `engines` and `.nvmrc` at `>=22.13 <23` (the locked ESLint 10.10.0 requires `^22.13.0`).
 - **AR-2 (testing-strategy):** Vitest for `apps/api` and `packages/contracts`; Jest with `jest-expo` and React Native Testing Library for `apps/mobile`. Fake timers for every cadence, backoff and heartbeat test; with real sockets fake only `setTimeout`, `setInterval` and `Date`. No coverage threshold.
 - **AR-3 (engineering-standards §1–§3):** TypeScript flags `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `verbatimModuleSyntax`, `noFallthroughCasesInSwitch`. ESLint `no-explicit-any: error` and `no-restricted-imports` stopping `domain/**` and `application/**` from importing `infrastructure/binance/**` or `infrastructure/simulator/**`. `domain/` never imports `packages/contracts`. No Binance-named identifier in `domain/` or `application/`.
 - **AR-4 (testing-strategy):** CI runs typecheck, lint and tests. CI never contacts Binance; it runs against the simulator or fixtures.
@@ -241,7 +241,7 @@ So that every later story is held to the same architectural and type-safety gate
 **Given** a fresh clone with Node 22.x and pnpm 12.4.2
 **When** `pnpm install --frozen-lockfile` then `pnpm typecheck`, `pnpm lint` and `pnpm test` run from the repository root
 **Then** each command runs across `apps/api`, `apps/mobile` and `packages/contracts` and exits 0
-**And** the root `package.json` declares `engines.node` `>=22.4 <23` and a `.nvmrc` pins 22
+**And** the root `package.json` declares `engines.node` `>=22.13 <23` and a `.nvmrc` pins 22 (floor raised from 22.4 because the locked ESLint 10.10.0 requires `^22.13.0`; human decision, 2026-09-19)
 
 **Given** the test runners
 **When** `pnpm test` runs

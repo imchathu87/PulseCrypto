@@ -4,7 +4,7 @@
 
 API and mobile share one wire contract. Written **from the walking-skeleton outcome** (commit
 `b21a370`, PR #1; strict flags and boundaries in `fa8c7a1`), not predicted. Package versions are those resolved in `pnpm-lock.yaml`. Node is the
-runtime the skeleton ran on (`node -v`); it is not yet pinned.
+runtime the skeleton ran on (`node -v`); Story 1.1 pinned it (see Decision).
 
 ## Decision
 
@@ -30,7 +30,9 @@ allowBuilds: { esbuild: true }   # required by tsx
 - API runs TS directly with `tsx`; `tsc` is typecheck-only.
 - `ws` 8.21.3 is declared directly in `apps/api` (ADR-008); the hoisted root `ws` is 7.5.13, so
   nothing relies on the transitive copy.
-- Follow-up: pin Node (`engines` + `.nvmrc`, `>=22.4 <23`). Node 22 reaches end of life on 2027-04-30.
+- Node is pinned by root `engines.node` `>=22.13 <23` and `.nvmrc` (`22`), from Story 1.1. The floor is
+  22.13, not 22.4, because the locked ESLint 10.10.0 requires `^22.13.0` (human decision, 2026-09-19).
+  Node 22 reaches end of life on 2027-04-30.
 
 ## Alternatives considered
 
@@ -51,3 +53,5 @@ allowBuilds: { esbuild: true }   # required by tsx
 ## Status
 
 Accepted (adopted from skeleton outcome). Requirements: CAP-4, CAP-16, NFR-1, NFR-2.
+
+Amended 2026-09-19 (Story 1.1, human decision): Node floor raised to 22.13; see `docs/ai/ai-development-log.md`.
