@@ -53,7 +53,7 @@ describe('api layer boundaries', () => {
 
   it('rejects a domain import of @pulsecrypto/contracts', async () => {
     const messages = await lint(
-      "import { MarketSnapshotSchema } from '@pulsecrypto/contracts';\nexport const x = MarketSnapshotSchema;\n",
+      "import { PairSnapshotSchema } from '@pulsecrypto/contracts';\nexport const x = PairSnapshotSchema;\n",
       'src/domain/x.ts',
     );
     const errors = restrictedImports(messages);
@@ -64,7 +64,7 @@ describe('api layer boundaries', () => {
 
   it('rejects a domain relative import of the contracts source', async () => {
     const messages = await lint(
-      "import { MarketSnapshotSchema } from '../../../../packages/contracts/src/index.ts';\nexport const x = MarketSnapshotSchema;\n",
+      "import { PairSnapshotSchema } from '../../../../packages/contracts/src/index.ts';\nexport const x = PairSnapshotSchema;\n",
       'src/domain/x.ts',
     );
     const errors = restrictedImports(messages);
@@ -85,7 +85,7 @@ describe('api layer boundaries', () => {
 
   it('allows an application import of @pulsecrypto/contracts', async () => {
     const messages = await lint(
-      "import { MarketSnapshotSchema } from '@pulsecrypto/contracts';\nexport const x = MarketSnapshotSchema;\n",
+      "import { PairSnapshotSchema } from '@pulsecrypto/contracts';\nexport const x = PairSnapshotSchema;\n",
       'src/application/x.ts',
     );
     expect(messages).toEqual([]);
