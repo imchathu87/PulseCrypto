@@ -189,7 +189,7 @@ Source: `figma-scope.md`, `docs/reference/figma-reference.png`, and architecture
 | CAP-14 | Epic 2 | Pull-to-refresh (Story 2.3) |
 | CAP-15 | Epic 1, Epic 2 | `client.setInterval` (Story 1.5); slider and tiles (Story 2.5) |
 | CAP-16 | Epic 3 | README and recording (Story 3.2) |
-| CAP-17 | Epic 1, Epic 2, Epic 3 | Simulator (Story 1.3); `SIMULATED` chip (Story 2.2); stress run (Story 3.1) |
+| CAP-17 | Epic 1, Epic 2, Epic 3 | Simulator (Story 1.3); no synthetic substitution on upstream failure (Stories 1.4, 1.5); `SIMULATED` chip (Story 2.2); stress run (Story 3.1) |
 
 NFR-1, NFR-2, NFR-6, NFR-7: every epic; enforced from Story 1.1. NFR-3: Epic 2. NFR-4: Epics 1 and 2. NFR-5: Stories 1.4, 1.5, 2.1.
 AR-1 to AR-25: Epic 1. AR-37 (scope exclusions) is a cross-cutting constraint: no story implements it; every story's review enforces it through AGENTS.md. AR-26 to AR-32: Epic 2. AR-33 to AR-35: Epic 3. AR-36: created in Story 1.1, maintained by every story, summarised in Story 3.2. UX-DR-1 to UX-DR-13: Epic 2.
@@ -371,7 +371,7 @@ As an operator running against the live market,
 I want the backend to ingest the combined Binance depth and ticker stream for all pairs and recover from upstream loss by itself,
 So that clients get real prices without a restart when Binance drops.
 
-**Requirements:** CAP-1, CAP-6 · NFR-5, NFR-6, NFR-7 · AR-11, AR-12, AR-13, AR-24, AR-25
+**Requirements:** CAP-1, CAP-6, CAP-17 (no substitution) · NFR-5, NFR-6, NFR-7 · AR-11, AR-12, AR-13, AR-24, AR-25
 
 Automated tests use recorded frame fixtures (`binance-feed.md` samples) and a fake socket factory; live Binance is used only in the manual check.
 
@@ -430,7 +430,7 @@ As a client connected to the gateway,
 I want a complete snapshot on connect, then only changed pairs at my own interval, plus a status heartbeat that tells me when data is stale,
 So that I always hold current state at a cadence I control and never mistake frozen prices for live ones.
 
-**Requirements:** CAP-2, CAP-4, CAP-6, CAP-15 (server side) · NFR-4, NFR-5, NFR-6 · AR-17, AR-18, AR-20, AR-21, AR-24
+**Requirements:** CAP-2, CAP-4, CAP-6, CAP-15 (server side), CAP-17 (no fallback) · NFR-4, NFR-5, NFR-6 · AR-9, AR-17, AR-18, AR-20, AR-21, AR-24
 
 Integration tests wire a fake `MarketDataSource` through the buffer to real `ws` clients, with fake `setTimeout`, `setInterval` and `Date` only.
 
@@ -461,6 +461,12 @@ Integration tests wire a fake `MarketDataSource` through the buffer to real `ws`
 **Then** `market.status` carries `source`, `upstream { connected, since }`, the complete `stalePairs` set, `intervalMs`, `heartbeatMs` and `serverTime = t`, and is sent on connect, on any change and every `heartbeatMs`
 **And** when the source emits `SourceStatusChange { connected: false }`, the client receives `upstream.connected: false` with every pair stale within one heartbeat while its socket stays open
 **And** when the source reconnects, the client receives `connected: true` and fresh batches with no backend restart
+
+**Given** `MARKET_SOURCE=binance` and a source that never connects (fake source emitting only `SourceStatusChange { connected: false }`, or none)
+**When** a client stays connected for several heartbeats
+**Then** every `market.status` has `source: 'binance'`, `upstream.connected: false` and every configured pair in `stalePairs`
+**And** no `market.batch` is sent, and the snapshot's pairs keep `null` prices and empty books
+**And** the composition root constructs only the configured source, and no code path starts a simulator when the selected source fails (ADR-011: no automatic fallback)
 
 **Given** three connected clients
 **When** a pair changes once

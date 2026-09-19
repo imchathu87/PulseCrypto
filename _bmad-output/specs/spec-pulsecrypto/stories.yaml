@@ -24,7 +24,8 @@
   title: Binance market data adapter
   description: >-
     Ingest the combined depth and ticker stream for all pairs, parse and normalize at the adapter
-    boundary, and reconnect with backoff and a silence watchdog (CAP-1, CAP-6).
+    boundary, and reconnect with backoff and a silence watchdog, never substituting synthetic data
+    (CAP-1, CAP-6, CAP-17).
   invoke_dev_with: >-
     Tests use recorded frame fixtures (binance-feed.md samples); live Binance only in manual runs.
 
@@ -32,7 +33,8 @@
   title: WebSocket gateway and client sessions
   description: >-
     Serve snapshot, batch and status messages per session at its own cadence, accept
-    client.setInterval, and report staleness with a heartbeat (CAP-2, CAP-4, CAP-6).
+    client.setInterval, and report staleness with a heartbeat, with no automatic simulator fallback
+    (CAP-2, CAP-4, CAP-6, CAP-17).
   spec_checkpoint: true
 
 - id: "6"
