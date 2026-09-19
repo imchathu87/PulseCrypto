@@ -13,5 +13,5 @@
     "verbatimModuleSyntax": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "test", "vitest.config.ts"]
+  "include": ["src", "test", "vitest.config.ts", "scripts"]
 }

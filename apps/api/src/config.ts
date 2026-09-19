@@ -10,11 +10,17 @@ export const DEFAULT_PAIRS: readonly Pair[] = [
 ];
 
 export const DEFAULT_SIMULATOR_RATE = 1000;
+export const DEFAULT_BINANCE_WS_URL = 'wss://stream.binance.com:9443';
+export const DEFAULT_UPSTREAM_SILENCE_MS = 10000;
+export const DEFAULT_UPSTREAM_CONNECT_TIMEOUT_MS = 10000;
 
 export interface AppConfig {
   readonly PAIRS: readonly Pair[];
   readonly MARKET_SOURCE: 'binance' | 'simulator';
   readonly SIMULATOR_RATE: number;
+  readonly BINANCE_WS_URL: string;
+  readonly UPSTREAM_SILENCE_MS: number;
+  readonly UPSTREAM_CONNECT_TIMEOUT_MS: number;
 }
 
 export const ConfigSchema = z
@@ -29,6 +35,28 @@ export const ConfigSchema = z
       message: 'must be "binance" or "simulator"',
     }),
     SIMULATOR_RATE: z
+      .number({ message: 'must be a valid integer' })
+      .int({ message: 'must be an integer' })
+      .positive({ message: 'must be positive' }),
+    BINANCE_WS_URL: z
+      .string()
+      .url({ message: 'must be a valid URL' })
+      .refine(
+        (val) => {
+          try {
+            const u = new URL(val);
+            return u.protocol === 'ws:' || u.protocol === 'wss:';
+          } catch {
+            return false;
+          }
+        },
+        { message: 'must be a ws: or wss: URL' },
+      ),
+    UPSTREAM_SILENCE_MS: z
+      .number({ message: 'must be a valid integer' })
+      .int({ message: 'must be an integer' })
+      .positive({ message: 'must be positive' }),
+    UPSTREAM_CONNECT_TIMEOUT_MS: z
       .number({ message: 'must be a valid integer' })
       .int({ message: 'must be an integer' })
       .positive({ message: 'must be positive' }),
@@ -76,10 +104,42 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     rawSimulatorRate = Number(trimmed);
   }
 
+  const rawBinanceWsUrl =
+    env.BINANCE_WS_URL === undefined || env.BINANCE_WS_URL === ''
+      ? DEFAULT_BINANCE_WS_URL
+      : env.BINANCE_WS_URL.trim();
+
+  let rawUpstreamSilenceMs: number;
+  if (env.UPSTREAM_SILENCE_MS === undefined || env.UPSTREAM_SILENCE_MS === '') {
+    rawUpstreamSilenceMs = DEFAULT_UPSTREAM_SILENCE_MS;
+  } else {
+    const trimmed = env.UPSTREAM_SILENCE_MS.trim();
+    if (!/^\d+$/.test(trimmed)) {
+      throw new Error(`Invalid UPSTREAM_SILENCE_MS: "${env.UPSTREAM_SILENCE_MS}" is not a valid integer`);
+    }
+    rawUpstreamSilenceMs = Number(trimmed);
+  }
+
+  let rawUpstreamConnectTimeoutMs: number;
+  if (env.UPSTREAM_CONNECT_TIMEOUT_MS === undefined || env.UPSTREAM_CONNECT_TIMEOUT_MS === '') {
+    rawUpstreamConnectTimeoutMs = DEFAULT_UPSTREAM_CONNECT_TIMEOUT_MS;
+  } else {
+    const trimmed = env.UPSTREAM_CONNECT_TIMEOUT_MS.trim();
+    if (!/^\d+$/.test(trimmed)) {
+      throw new Error(
+        `Invalid UPSTREAM_CONNECT_TIMEOUT_MS: "${env.UPSTREAM_CONNECT_TIMEOUT_MS}" is not a valid integer`,
+      );
+    }
+    rawUpstreamConnectTimeoutMs = Number(trimmed);
+  }
+
   const result = ConfigSchema.safeParse({
     PAIRS: rawPairs,
     MARKET_SOURCE: rawMarketSource,
     SIMULATOR_RATE: rawSimulatorRate,
+    BINANCE_WS_URL: rawBinanceWsUrl,
+    UPSTREAM_SILENCE_MS: rawUpstreamSilenceMs,
+    UPSTREAM_CONNECT_TIMEOUT_MS: rawUpstreamConnectTimeoutMs,
   });
 
   if (!result.success) {
