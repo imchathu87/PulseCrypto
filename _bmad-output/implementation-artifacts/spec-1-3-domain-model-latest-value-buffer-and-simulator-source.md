@@ -2,7 +2,8 @@
 title: 'Story 1.3: Domain model, latest-value buffer and simulator source'
 type: 'feature'
 created: '2026-09-19'
-status: 'ready-for-dev'
+status: 'done'
+baseline_commit: '80ea1b9d03645a2dca9aff700c78db15018ed5b3'
 route: 'dispatch'
 review_loop_iteration: 0
 context:
@@ -53,17 +54,17 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `apps/api/src/domain/market-event.ts` -- `Pair`, `OrderBookLevel` (readonly `[price, qty]`), `DepthUpdate`, `TickerUpdate` (`price, change24hPct, high24h, low24h, volume24h`), `SourceStatusChange`, `MarketEvent`, `MarketEventSink`, `MarketDataSource`, `SourceKind`.
-- [ ] `apps/api/src/domain/pair-state.ts` -- `DISPLAY_LEVELS`, `PairState`, `emptyPairState(pair)`, `applyDepth`, `applyTicker`, `round2`, spread/pressure derivation.
-- [ ] `apps/api/src/domain/book.ts` -- `isValidBook(bids, asks)`: bids strictly descending, asks strictly ascending, bestBid < bestAsk; empty side valid. Story 1.4 reuses it.
-- [ ] `apps/api/src/domain/staleness.ts` -- `isPairStale(state, { upstreamConnected, now, staleAfterMs })`.
-- [ ] `apps/api/src/application/counters.ts` -- `COUNTER_NAMES` (the 10 architecture §8 names), `Counters` with `increment(name)` and read-only `snapshot()`.
-- [ ] `apps/api/src/application/latest-value-buffer.ts` -- `LatestValueBuffer(pairs, counters)`: `apply(DepthUpdate | TickerUpdate)`, `get(pair)`, `values()`, `currentRev`.
-- [ ] `apps/api/src/infrastructure/simulator/prng.ts`, `simulator-market-data-source.ts` -- seeded PRNG; `SimulatorMarketDataSource({ pairs, ratePerSecond, seed, now? })` with `kind: 'simulator'`. Mid-price follows a multiplicative random walk from a static base-price table (100 for unknown pairs). The book has 20 levels a side at `mid ∓ tick × (i+1)` with `tick = mid × 1e-4` and qty > 0. `start` twice throws.
-- [ ] `apps/api/src/config.ts` -- `loadConfig(env)`: `PAIRS` (comma list, trimmed, `PairSchema`, ≥1, unique; default the five pairs), `MARKET_SOURCE` (`binance` default | `simulator`), `SIMULATOR_RATE` per the decisions above.
-- [ ] `apps/api/package.json`, `pnpm-lock.yaml` -- declare `zod: 4.6.5`; `pnpm install`.
-- [ ] Tests: `src/domain/{pair-state,book,staleness}.test.ts`, `src/application/{latest-value-buffer,counters}.test.ts`, `src/infrastructure/simulator/simulator-market-data-source.test.ts`, `src/config.test.ts` -- the I/O matrix plus the ACs below.
-- [ ] `apps/api/test/domain-boundaries.test.ts` -- `DISPLAY_LEVELS` equals the contracts constant. A TypeScript-scanner check finds no `Identifier` token or file name matching `/binance/i` under `src/domain` and `src/application`. The `'binance'` string literal in `SourceKind` is allowed (ADR-011).
+- [x] `apps/api/src/domain/market-event.ts` -- `Pair`, `OrderBookLevel` (readonly `[price, qty]`), `DepthUpdate`, `TickerUpdate` (`price, change24hPct, high24h, low24h, volume24h`), `SourceStatusChange`, `MarketEvent`, `MarketEventSink`, `MarketDataSource`, `SourceKind`.
+- [x] `apps/api/src/domain/pair-state.ts` -- `DISPLAY_LEVELS`, `PairState`, `emptyPairState(pair)`, `applyDepth`, `applyTicker`, `round2`, spread/pressure derivation.
+- [x] `apps/api/src/domain/book.ts` -- `isValidBook(bids, asks)`: bids strictly descending, asks strictly ascending, bestBid < bestAsk; empty side valid. Story 1.4 reuses it.
+- [x] `apps/api/src/domain/staleness.ts` -- `isPairStale(state, { upstreamConnected, now, staleAfterMs })`.
+- [x] `apps/api/src/application/counters.ts` -- `COUNTER_NAMES` (the 10 architecture §8 names), `Counters` with `increment(name)` and read-only `snapshot()`.
+- [x] `apps/api/src/application/latest-value-buffer.ts` -- `LatestValueBuffer(pairs, counters)`: `apply(DepthUpdate | TickerUpdate)`, `get(pair)`, `values()`, `currentRev`.
+- [x] `apps/api/src/infrastructure/simulator/prng.ts`, `simulator-market-data-source.ts` -- seeded PRNG; `SimulatorMarketDataSource({ pairs, ratePerSecond, seed, now? })` with `kind: 'simulator'`. Mid-price follows a multiplicative random walk from a static base-price table (100 for unknown pairs). The book has 20 levels a side at `mid ∓ tick × (i+1)` with `tick = mid × 1e-4` and qty > 0. `start` twice throws.
+- [x] `apps/api/src/config.ts` -- `loadConfig(env)`: `PAIRS` (comma list, trimmed, `PairSchema`, ≥1, unique; default the five pairs), `MARKET_SOURCE` (`binance` default | `simulator`), `SIMULATOR_RATE` per the decisions above.
+- [x] `apps/api/package.json`, `pnpm-lock.yaml` -- declare `zod: 4.6.5`; `pnpm install`.
+- [x] Tests: `src/domain/{pair-state,book,staleness}.test.ts`, `src/application/{latest-value-buffer,counters}.test.ts`, `src/infrastructure/simulator/simulator-market-data-source.test.ts`, `src/config.test.ts` -- the I/O matrix plus the ACs below.
+- [x] `apps/api/test/domain-boundaries.test.ts` -- `DISPLAY_LEVELS` equals the contracts constant. A TypeScript-scanner check finds no `Identifier` token or file name matching `/binance/i` under `src/domain` and `src/application`. The `'binance'` string literal in `SourceKind` is allowed (ADR-011).
 
 **Acceptance Criteria:**
 - Given 20 levels per side, when folded, then pressure uses only the first 10, and `buyPressure + sellPressure` equals 100 within `1e-9`.
@@ -74,9 +75,39 @@ context:
 
 ## Implementation Notes
 
+- Implemented pure domain types and fold functions without importing contracts or infrastructure into `src/domain/`.
+- `LatestValueBuffer` encapsulates in-memory `Map<Pair, PairState>` bounded to O(pairs) with monotonic process-wide revision sequence and counter integration.
+- `SimulatorMarketDataSource` implements deterministic seeded random walk, generating 20 levels of valid order book bids/asks and 100 ms tick cadence with ticker updates.
+- `loadConfig` parses env variables with Zod schemas and validates required constraints naming the failing variable on errors.
+- Added comprehensive unit tests and TypeScript-scanner AST boundary verification tests.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| Finding | Verdict | Evidence / Route |
+|---------|---------|------------------|
+| BH-1 / EH-1: Missing runtime event kind validation in `apply` | low | `apps/api/src/application/latest-value-buffer.ts:41-44` non-depth/ticker events fall through to `applyTicker`. Route: patch. |
+| BH-2 / EH-5: Missing structural validation on order book levels | false | `apps/api/src/domain/book.ts` operates on typed tuples already validated at system boundaries; external data is Zod-validated. |
+| BH-3: `applyDepth` does not truncate order book to 20 levels | false | Spec does not mandate depth truncation in domain fold; input stream is `@depth20`. |
+| BH-4: `isValidBook` does not enforce depth <= 20 | false | Spec defines `isValidBook` semantics around price ordering and positivity, not level count. |
+| BH-5 / EH-2: SimulatorMarketDataSource allows duplicate pairs | medium | `apps/api/src/infrastructure/simulator/simulator-market-data-source.ts:42-46` constructor does not reject duplicates, corrupting rate calculation. Route: patch. |
+| BH-6: `SimulatorMarketDataSource.stop()` does not reset `started` | false | Data sources in ADR-011 are single-lifecycle per process; restart is not in spec. |
+| BH-7 / EH-3: `tick()` loop does not abort if stopped during emission | low | `apps/api/src/infrastructure/simulator/simulator-market-data-source.ts:99-107` if sink invokes stop(), tick continues. Route: patch. |
+| BH-8: Counters lacks decrement for `ws.clients.active` | false | Spec defines `increment(name, by)` for Story 1.3; gauge decrements belong to Story 1.5. |
+| BH-9: Whitespace-only `PAIRS` handling | false | Config parser throws `Invalid PAIRS` naming the variable, satisfying error handling requirements. |
+| BH-10: Missing pinning test for `MAX_LEVELS` | false | Spec explicitly requires pinning `DISPLAY_LEVELS = 10`; domain does not use `MAX_LEVELS`. |
+| BH-11: Simulator ticker metrics fluctuate unrealistically | false | Simulator random walk formulas conform to deterministic simulation spec. |
+| BH-12: Missing test coverage for depth updates with <10 levels | low | `apps/api/src/domain/pair-state.test.ts` benefits from testing books with fewer than 10 levels. Route: patch. |
+| BH-13: Missing default staleness threshold constant export | false | Staleness threshold is configured dynamically per ADR-007. |
+| BH-14: `values()` array allocation overhead | false | 5-element array allocation has negligible overhead and prevents external mutation. |
+| VG-1: Fractional ratio pressure rounding test | low | `apps/api/src/domain/pair-state.test.ts` missing test exercising `round2` on fractional ratios. Route: patch. |
+| VG-2: Ticker field preservation in `applyDepth` test | low | `apps/api/src/domain/pair-state.test.ts` missing test verifying `applyDepth` preserves existing ticker fields. Route: patch. |
+| VG-3: Simulator fallback base price for unknown pairs test | low | `apps/api/src/infrastructure/simulator/simulator-market-data-source.test.ts` missing test verifying base price 100 for custom pairs. Route: patch. |
+| VG-4: `source.kind === 'simulator'` assertion | low | `apps/api/src/infrastructure/simulator/simulator-market-data-source.test.ts` missing assertion for `source.kind`. Route: patch. |
+| VG-5: Fresh ticker with stale depth staleness test | low | `apps/api/src/domain/staleness.test.ts` missing test when ticker is fresh but depth is stale. Route: patch. |
+| EH-4: Empty pairs array in LatestValueBuffer constructor | low | `apps/api/src/application/latest-value-buffer.ts:12-21` does not guard against empty pairs array. Route: patch. |
+| EH-6: Clock regression in staleness check | false | Standard system monotonicity; not part of staleness specification. |
 
 ## Design Notes
 
