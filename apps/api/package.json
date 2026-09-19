@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
-    "lint": "eslint src",
-    "typecheck": "tsc"
+    "lint": "eslint src test vitest.config.ts",
+    "typecheck": "tsc",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -15,7 +16,8 @@
     "eslint": "^10.10.0",
     "tsx": "4.23.13",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.70.0"
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@fastify/websocket": "11.3.1",
