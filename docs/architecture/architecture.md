@@ -6,7 +6,7 @@ Contracts: [`websocket-protocol.md`](../contracts/websocket-protocol.md), [`rest
 
 ## 0. Requirement IDs used here
 
-Functional IDs: spec capabilities `CAP-1`..`CAP-16` ([`SPEC.md`](../../_bmad-output/specs/spec-pulsecrypto/SPEC.md)).
+Functional IDs: spec capabilities `CAP-1`..`CAP-17` ([`SPEC.md`](../../_bmad-output/specs/spec-pulsecrypto/SPEC.md)).
 The brief's non-functional list has no IDs; labelled here for traceability only:
 
 | NFR-1 | NFR-2 | NFR-3 | NFR-4 | NFR-5 | NFR-6 | NFR-7 |
@@ -217,6 +217,7 @@ data visible across a backend restart *(CAP-13)*.
 | `SLOW_CLIENT_MAX_STALL_MS` | chosen in implementation, tuned in stress test | api |
 | Downstream ping / pong timeout | 15 s / 30 s | api |
 | `SIMULATOR_RATE` | total events/s, split evenly across pairs, ≥ 1 depth per pair per 100 ms | api |
+| `DOWNSTREAM_STABLE_MS` | `4 × heartbeatMs` (20 s at the default); chosen, not measured. Must exceed the `3 × heartbeatMs` liveness window | mobile constant |
 | `EXPO_PUBLIC_API_URL` | unset → `http://10.0.2.2:8080` (Android), `http://localhost:8080` (iOS) | mobile |
 
 Server config is Zod-parsed once at startup; invalid config fails fast.
@@ -252,3 +253,4 @@ packages/contracts/  ws-messages · rest · pair-snapshot · constants · decode
 | 4 | §4, ADR-006 | 10 | §3, §6, ADR-007 | 16 | Delivery: README + recording; this doc supplies its architecture, buffering and trade-off sections |
 | 5 | §3, ADR-006 | 11 | §6 | | |
 | 6 | §3, §5, ADR-008/011 | 12 | §6, ADR-009/010 | | |
+| | | | | 17 | §3, §5, §6, §9, ADR-011 |
