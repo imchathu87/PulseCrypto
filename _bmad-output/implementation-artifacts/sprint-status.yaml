@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 09-19-2026 17:37
-last_updated: 09-19-2026 18:52
+last_updated: 09-19-2026 20:17
 project: PulseCrypto
 project_key: NOKEY
 tracking_system: file-system
@@ -38,7 +38,7 @@ development_status:
   epic-1: in-progress
   1-1-toolchain-baseline-and-ci: review
   1-2-wire-contracts-and-protocol-conformance: review
-  1-3-domain-model-latest-value-buffer-and-simulator-source: backlog
+  1-3-domain-model-latest-value-buffer-and-simulator-source: review
   1-4-binance-market-data-adapter: backlog
   1-5-websocket-gateway-and-client-sessions: backlog
   1-6-slow-consumer-backpressure: backlog
