@@ -36,7 +36,8 @@ decisions:
   - "Time budget is 3 days (2026-09-19). CAP-15 scope: slider, JS FPS tile, WS msgs/sec tile; memory tile and RESET/HEALTHY chips omitted."
   - "DOWNSTREAM_STABLE_MS = 4 x heartbeatMs, a mobile constant (architecture section 9, approved 2026-09-19)."
   - "architecture.md section 0 and section 12 corrected to include CAP-17 (approved 2026-09-19)."
-  - "Open at completion: whether Story 1.1 should create docs/ai/ai-development-log.md (recommended) or Story 3.2 reconstructs it from git history. Not decided; Story 1.1 left unchanged."
+  - "Story 1.1 creates docs/ai/ai-development-log.md so rejected review findings are recorded from the first story (AR-36); Story 3.2 summarises it in the README (decided at the sprint-planning readiness gate, 2026-09-19)."
+  - "decodeServerMessage takes the parse mode as a parameter; ADR-006 and architecture §6 amended to match Story 1.2 (sprint-planning readiness gate, 2026-09-19)."
 ---
 
 # PulseCrypto - Epic Breakdown
@@ -98,8 +99,8 @@ Toolchain and quality gates
 
 Wire contracts
 
-- **AR-5 (ADR-006, websocket-protocol.md):** `packages/contracts` holds Zod schemas (default `.strip()`), inferred types, `DISPLAY_LEVELS = 10`, `MAX_LEVELS = 20`, `DEFAULT_HEARTBEAT_MS = 5000`, `decodeServerMessage(raw: unknown)` and the backoff helper. Envelope `{ v: 1, type, t }`; all wire times are integer ms epoch; `pair` matches `^[A-Z0-9]+$` and is not an enum.
-- **AR-6 (engineering-standards §6, AGENTS.md):** `decodeServerMessage` full-parses in `__DEV__` and envelope-parses in production. It is the only permitted cast of external data. A `__DEV__` failure is logged once per type and the message dropped; `v ≠ 1` moves the socket to `INCOMPATIBLE`.
+- **AR-5 (ADR-006, websocket-protocol.md):** `packages/contracts` holds Zod schemas (default `.strip()`), inferred types, `DISPLAY_LEVELS = 10`, `MAX_LEVELS = 20`, `DEFAULT_HEARTBEAT_MS = 5000`, `decodeServerMessage(raw: unknown, mode: 'full' | 'envelope')` and the backoff helper. Envelope `{ v: 1, type, t }`; all wire times are integer ms epoch; `pair` matches `^[A-Z0-9]+$` and is not an enum.
+- **AR-6 (engineering-standards §6, AGENTS.md, ADR-006):** `decodeServerMessage` full-parses in `__DEV__` and envelope-parses in production; the caller passes the mode, and contracts reads no `__DEV__` global. It is the only permitted cast of external data. A `__DEV__` failure is logged once per type and the message dropped; `v ≠ 1` moves the socket to `INCOMPATIBLE`.
 - **AR-7 (ADR-008):** Backoff `delay(attempt) = floor(random() × min(cap, base × 2^attempt))`, `attempt` from 0, `random` injected; one pure function, one shared set of test vectors.
 - **AR-8 (testing-strategy, ADR-006):** Contract tests: every example in `websocket-protocol.md` §9 and `rest-api.md` parses; every invalid case in `websocket-protocol.md` §10 and `rest-api.md` § Invalid cases is rejected. Schema, document and tests change together.
 
@@ -147,7 +148,7 @@ Verification and delivery
 - **AR-33 (testing-strategy § Stress):** Stress run with `SIMULATOR_RATE=1000`, `BROADCAST_INTERVAL_MS=100`, five pairs, 60 s. Record the testing-strategy metric list and the exact reproduce command in `docs/verification/stress-results.md`. Measured numbers only.
 - **AR-34 (testing-strategy § Resilience):** Manual resilience run (primary and four secondary scenarios) recorded in `docs/verification/resilience-results.md`. Confirms two assumptions left open by the ADRs: `ws` answers Binance pings over a >2 min run, and React Native answers server pings natively.
 - **AR-35 (SPEC constraints, AGENTS.md):** No performance or resilience claim anywhere unless measured and recorded in `docs/verification/`.
-- **AR-36 (engineering-standards §9):** Rejected review findings are recorded, with a reason, in `docs/ai/ai-development-log.md`; this log also feeds the README's AI-tool section (CAP-16).
+- **AR-36 (engineering-standards §9):** Rejected review findings are recorded, with a reason, in `docs/ai/ai-development-log.md`, created in Story 1.1 and kept current by every story; this log also feeds the README's AI-tool section (CAP-16).
 - **AR-37 (scope-boundaries §1):** No database, Redis, Kafka, microservices, Kubernetes, event sourcing, binary protocol, GPU pipeline, auth or trading. No stub or interface for scale-out.
 
 ### UX Design Requirements
@@ -191,7 +192,7 @@ Source: `figma-scope.md`, `docs/reference/figma-reference.png`, and architecture
 | CAP-17 | Epic 1, Epic 2, Epic 3 | Simulator (Story 1.3); `SIMULATED` chip (Story 2.2); stress run (Story 3.1) |
 
 NFR-1, NFR-2, NFR-6, NFR-7: every epic; enforced from Story 1.1. NFR-3: Epic 2. NFR-4: Epics 1 and 2. NFR-5: Stories 1.4, 1.5, 2.1.
-AR-1 to AR-25: Epic 1. AR-37 (scope exclusions) is a cross-cutting constraint: no story implements it; every story's review enforces it through AGENTS.md. AR-26 to AR-32: Epic 2. AR-33 to AR-36: Epic 3. UX-DR-1 to UX-DR-13: Epic 2.
+AR-1 to AR-25: Epic 1. AR-37 (scope exclusions) is a cross-cutting constraint: no story implements it; every story's review enforces it through AGENTS.md. AR-26 to AR-32: Epic 2. AR-33 to AR-35: Epic 3. AR-36: created in Story 1.1, maintained by every story, summarised in Story 3.2. UX-DR-1 to UX-DR-13: Epic 2.
 
 ## Epic List
 
@@ -233,7 +234,7 @@ As a developer on PulseCrypto,
 I want one command each for typecheck, lint and test across all three packages, enforced in CI,
 So that every later story is held to the same architectural and type-safety gates from its first commit.
 
-**Requirements:** NFR-1, NFR-2 · AR-1, AR-2, AR-3, AR-4
+**Requirements:** NFR-1, NFR-2 · AR-1, AR-2, AR-3, AR-4, AR-36
 
 **Acceptance Criteria:**
 
@@ -267,6 +268,11 @@ So that every later story is held to the same architectural and type-safety gate
 **Given** the new dev dependencies (Vitest, Jest, jest-expo, React Native Testing Library, ESLint for mobile)
 **When** the PR is opened
 **Then** its description carries a one-line justification for each
+
+**Given** engineering-standards §9 requires rejected review findings to be recorded
+**When** this story is complete
+**Then** `docs/ai/ai-development-log.md` exists with a short header stating its purpose and an entry format (date, story, finding, decision, reason)
+**And** it records this story's own review outcome, or states "no findings rejected"
 
 ### Story 1.2: Wire contracts and protocol conformance
 

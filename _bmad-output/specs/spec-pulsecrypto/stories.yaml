@@ -2,13 +2,15 @@
   title: Toolchain baseline and CI
   description: >-
     Add Vitest (api, contracts), Jest with jest-expo (mobile), ESLint layer-boundary rules,
-    the Node pin from ADR-012, and a CI workflow running typecheck, lint and tests (NFR-1, NFR-2).
+    the Node pin from ADR-012, a CI workflow running typecheck, lint and tests, and
+    docs/ai/ai-development-log.md for rejected review findings (NFR-1, NFR-2).
 
 - id: "2"
-  title: Wire contracts and protocol document
+  title: Wire contracts and protocol conformance
   description: >-
-    Build packages/contracts (Zod schemas, constants, decodeServerMessage, backoff helper) and
-    docs/contracts/websocket-protocol.md with contract tests over every example (CAP-4, CAP-5).
+    Build packages/contracts (Zod schemas, constants, decodeServerMessage, backoff helper) against the
+    existing docs/contracts/ protocol documents, with contract tests over every example and invalid
+    case (CAP-4, CAP-5).
   spec_checkpoint: true
   done_checkpoint: true
 
@@ -78,8 +80,8 @@
 - id: "12"
   title: Telemetry and Settings screen
   description: >-
-    Show measured JS FPS and message rate flushed at 1 Hz, the update-frequency slider, and the
-    memory tile only if Expo Go exposes a real heap reading (CAP-12, CAP-15).
+    Show measured JS FPS and message rate flushed at 1 Hz and the update-frequency slider; the
+    memory tile and RESET / HEALTHY chips are omitted under the 3-day scope (CAP-12, CAP-15).
   done_checkpoint: true
 
 - id: "13"

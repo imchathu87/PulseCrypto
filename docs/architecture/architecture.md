@@ -166,8 +166,9 @@ data visible across a backend restart *(CAP-13)*.
   `transformOrigin`, left for bids and right for asks). The book shows `DISPLAY_LEVELS = 10` per side
   (contracts constant); the depth visual may use up to 20. Reanimated is not added, because core
   `Animated` covers these needs.
-- **Decoding**: `decodeServerMessage(raw: unknown)` in contracts envelope-parses (`v`, `type`, `t`)
-  in production and full-parses in `__DEV__` (engineering-standards §6). A `__DEV__` failure is
+- **Decoding**: `decodeServerMessage(raw: unknown, mode)` in contracts envelope-parses (`v`, `type`, `t`)
+  in production and full-parses in `__DEV__` (engineering-standards §6); `MarketSocket` passes the
+  mode, since contracts reads no platform global (ADR-006). A `__DEV__` failure is
   logged once per type and the message dropped. A `v` mismatch moves the socket to `INCOMPATIBLE`.
 - **Endpoints**: `EXPO_PUBLIC_API_URL` is an `http://host:port` origin; `api-endpoints` derives the WS URL.
 
