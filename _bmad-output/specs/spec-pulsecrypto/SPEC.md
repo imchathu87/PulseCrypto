@@ -111,7 +111,8 @@ On the Android emulator, a reviewer watches all five pairs stream live at 100ms,
 - The Settings tab opens the same combined Telemetry & Settings screen shown in the PNG.
 - Test thresholds not set by the brief were chosen by the spec: data within 5s of start (CAP-1), a 60s stalled client (CAP-3), FPS ≥ 55 (CAP-12).
 - Watchlist 24h change uses the brief's arrow format (`▲ 1.82%` / `▼ 0.41%`).
+- Time budget is 3 days (answered 2026-09-19). CAP-15 builds the update-frequency slider, the JS FPS tile and the WS msgs/sec tile; the memory tile and the `RESET` / `HEALTHY` chips are omitted.
 
 ## Open Questions
 
-- What is the deadline or time budget? It affects how much of CAP-15 to build.
+None.
