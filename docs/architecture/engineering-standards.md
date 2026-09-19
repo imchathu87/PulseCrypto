@@ -51,7 +51,10 @@ Enforced by ESLint in `apps/api/eslint.config.js`, scoped to `src/domain/**` and
 ```
 
 No Binance-shaped object crosses the adapter boundary. Raw exchange payloads are parsed and
-normalized inside the adapter; only `MarketSnapshot` leaves it.
+normalized inside the adapter; only domain `MarketEvent`s (`DepthUpdate`, `TickerUpdate`,
+`SourceStatusChange`) leave it (ADR-011). The domain folds them into `PairState`; only
+`presentation/` maps `PairState` to the wire type `PairSnapshot` (ADR-006). `domain/` never imports
+`packages/contracts`.
 
 ## 4. Error handling
 
@@ -76,7 +79,7 @@ connect/disconnect, client connect/disconnect, slow-consumer threshold crossed, 
 |---|---|
 | Server, upstream (every Binance frame) | Full Zod parse, always |
 | Server, downstream (every client control message) | Full Zod parse, always |
-| Client, production | Envelope only: `v`, `type`, `t` |
+| Client, production | Envelope only: `v`, `type`, `t`, via `decodeServerMessage` (the one permitted cast; AGENTS.md) |
 | Client, `__DEV__` | Full schema parse of every message |
 
 Full per-batch validation on device at 10 Hz costs measurable CPU on an emulator — the exact

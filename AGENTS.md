@@ -12,6 +12,7 @@
 
 - Follow the approved architecture and ADRs.
 - TypeScript strict. `unknown` at external boundaries, narrowed by a Zod parse. Never `any`; never `as unknown as X` to evade it.
+  - Sole exception: `decodeServerMessage` in `packages/contracts` may type a server message after an envelope-only parse in production builds (engineering-standards §6, ADR-006). No other cast of external data is permitted.
 - Validate external data at every boundary: upstream frames, client control messages, REST responses.
 - Keep domain logic independent of transport. No Binance-shaped object crosses the adapter boundary.
 - Keep high-frequency market state isolated from broad UI state.

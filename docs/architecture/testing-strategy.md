@@ -47,7 +47,7 @@ normalization and the buffer to a real downstream WebSocket client:
 - A newly connected client receives `market.snapshot` containing **all** pairs before any `market.batch`.
 - A client's cursor is **not** advanced when a frame is skipped for backpressure; the value
   arrives on the following tick.
-- `client.setInterval` outside 50–2000 ms is rejected with `BAD_REQUEST`; the previous interval is retained.
+- `client.setInterval` outside 10–1000 ms (ADR-004) is rejected with `BAD_REQUEST`; the previous interval is retained.
 - Two clients on different intervals each receive their own cadence from shared state.
 - `market.status` reports `upstream.connected: false` within the heartbeat window after the
   upstream adapter drops, while the downstream socket stays open.
@@ -74,7 +74,7 @@ rejected. This is what keeps the contract document and the contract code from dr
 
 ## Stress testing
 
-Runs against the simulator data source defined in ADR-011; it is not redefined here.
+Runs against the simulator data source defined in [ADR-011](adr/ADR-011-market-data-source.md); it is not redefined here.
 
 Configuration: `SIMULATOR_RATE=1000`, `BROADCAST_INTERVAL_MS=100`, five pairs, 60 s run.
 
