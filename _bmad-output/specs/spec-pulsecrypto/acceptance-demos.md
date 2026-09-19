@@ -11,3 +11,4 @@ Each item must appear in the screen recording (Android emulator) and be reproduc
 7. Pull-to-refresh on the watchlist while prices keep streaming. [CAP-14]
 8. Telemetry: FPS ≥ 55 under load; moving the update-frequency slider changes msgs/sec. [CAP-12, CAP-15]
 9. Backend-side (terminal or test output): slow-consumer protection and upstream reconnect/stale handling. [CAP-3, CAP-6]
+10. Backend on the synthetic source: `SIMULATED` chip visible, pairs streaming. [CAP-17]

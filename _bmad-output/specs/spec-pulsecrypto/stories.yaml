@@ -1,0 +1,102 @@
+- id: "1"
+  title: Toolchain baseline and CI
+  description: >-
+    Add Vitest (api, contracts), Jest with jest-expo (mobile), ESLint layer-boundary rules,
+    the Node pin from ADR-012, and a CI workflow running typecheck, lint and tests (NFR-1, NFR-2).
+
+- id: "2"
+  title: Wire contracts and protocol document
+  description: >-
+    Build packages/contracts (Zod schemas, constants, decodeServerMessage, backoff helper) and
+    docs/contracts/websocket-protocol.md with contract tests over every example (CAP-4, CAP-5).
+  spec_checkpoint: true
+  done_checkpoint: true
+
+- id: "3"
+  title: Domain model, latest-value buffer and simulator source
+  description: >-
+    Implement PairState with spread and pressure math, the rev-stamped latest-value map, the
+    MarketDataSource interface and the synthetic simulator source (CAP-2, CAP-17).
+
+- id: "4"
+  title: Binance market data adapter
+  description: >-
+    Ingest the combined depth and ticker stream for all pairs, parse and normalize at the adapter
+    boundary, and reconnect with backoff and a silence watchdog (CAP-1, CAP-6).
+  invoke_dev_with: >-
+    Tests use recorded frame fixtures (binance-feed.md samples); live Binance only in manual runs.
+
+- id: "5"
+  title: WebSocket gateway and client sessions
+  description: >-
+    Serve snapshot, batch and status messages per session at its own cadence, accept
+    client.setInterval, and report staleness with a heartbeat (CAP-2, CAP-4, CAP-6).
+  spec_checkpoint: true
+
+- id: "6"
+  title: Slow-consumer backpressure
+  description: >-
+    Skip ticks above the soft buffer limit without advancing the cursor, and close stalled or
+    hard-limit clients with 4008, keeping backend memory bounded (CAP-3).
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Add an explicit test that a skipped frame's value arrives on the next tick with the cursor
+    unchanged.
+
+- id: "7"
+  title: REST endpoints and server configuration
+  description: >-
+    Serve GET /pairs/meta and GET /health with counters, and Zod-parse server configuration once
+    at startup, failing fast when it is invalid (CAP-5, NFR-6).
+  done_checkpoint: true
+
+- id: "8"
+  title: Mobile market data layer
+  description: >-
+    Build MarketSocket (state machine, backoff, liveness, AppState pause, per-frame coalescing),
+    marketStore and the pairs-meta query, so last data survives disconnects (CAP-13, NFR-3, NFR-4).
+  spec_checkpoint: true
+
+- id: "9"
+  title: Watchlist and navigation
+  description: >-
+    Add the bottom tabs and the watchlist rows with live price, 24h change, price flash, and
+    liveness and SIMULATED chips (CAP-7, CAP-11, CAP-17).
+
+- id: "10"
+  title: Search, favourites and pull-to-refresh
+  description: >-
+    Filter the watchlist, persist favourites safely across hydration and restarts, and refresh
+    metadata without touching the live socket (CAP-8, CAP-9, CAP-14).
+
+- id: "11"
+  title: Terminal screen and order book
+  description: >-
+    Show pair details with the index-keyed order book, animated depth bars, depth visual,
+    liquidity gap and pressure label, per figma-scope.md (CAP-10, CAP-11).
+
+- id: "12"
+  title: Telemetry and Settings screen
+  description: >-
+    Show measured JS FPS and message rate flushed at 1 Hz, the update-frequency slider, and the
+    memory tile only if Expo Go exposes a real heap reading (CAP-12, CAP-15).
+  done_checkpoint: true
+
+- id: "13"
+  title: Stress and resilience verification
+  description: >-
+    Run the simulator stress test and the manual resilience scenarios from testing-strategy.md and
+    record results in docs/verification/ (CAP-3, CAP-12, CAP-17).
+  invoke_dev_with: >-
+    Record only measured numbers and the exact reproduce command; leave any metric you could not
+    collect marked as not measured.
+
+- id: "14"
+  title: README and screen recording
+  description: >-
+    Write the README covering every CAP-16 section and a recording checklist from
+    acceptance-demos.md (CAP-16).
+  done_checkpoint: true
+  invoke_dev_with: >-
+    The agent writes the README and a recording checklist from acceptance-demos.md; the human
+    records the video.

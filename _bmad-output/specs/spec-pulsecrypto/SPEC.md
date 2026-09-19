@@ -5,6 +5,8 @@ companions:
   - figma-scope.md
   - stack.md
   - acceptance-demos.md
+  - ../../../docs/architecture/architecture.md
+  - ../../../docs/architecture/testing-strategy.md
 sources:
   - ../../../docs/reference/EP-Practical Assignment - Staff Engineer - Mobile Apps (Architect - Mobile Apps) 2.pdf
 ---
@@ -67,6 +69,9 @@ Mandate: a Staff Engineer (Mobile Apps) take-home assessment. Evaluators judge t
 - **CAP-16**
   - **intent:** Reviewers receive a runnable repo, a screen recording, and a README covering setup, build/run, architecture decisions, buffering strategy, payload format, assumptions, trade-offs and AI-tool usage.
   - **success:** A reviewer can follow the README from a fresh clone to a running Android app; the recording covers every item in `acceptance-demos.md`.
+- **CAP-17**
+  - **intent:** Backend can run on a deterministic, offline synthetic market source at a configurable event rate for stress tests and CI; synthetic data is never substituted for Binance automatically and is always labelled as synthetic in the app.
+  - **success:** Started on the synthetic source at 1000 events/s, all five pairs stream to the app under a visible `SIMULATED` label with no network access to Binance; started on Binance with Binance unreachable, clients see stale status and no synthetic prices.
 
 ## Constraints
 
@@ -75,11 +80,13 @@ Mandate: a Staff Engineer (Mobile Apps) take-home assessment. Evaluators judge t
 - The Android emulator is the required target; the iOS simulator is optional. The backend URL is configurable per platform (see `stack.md`).
 - "Current price" means the **last traded price** from the Binance ticker, not the order book mid-price.
 - Binance depth payloads carry no symbol and no event time; pair identity and timestamps come from elsewhere (see `binance-feed.md`).
-- The brief evaluates these quality attributes: clean architecture, maintainable code, separation of concerns, efficient state management, robust connection handling, and appropriate error handling.
+- The brief evaluates these quality attributes, labelled as in `architecture.md` §0: NFR-1 clean architecture, NFR-2 maintainable code, NFR-3 responsive UI under continuous updates, NFR-4 efficient state management, NFR-5 robust connection handling, NFR-6 appropriate error handling, NFR-7 separation of concerns.
 - Only Binance public market streams are used; no API keys, accounts or order placement.
 - The UI follows the provided Figma PNG only and stays minimal; `figma-scope.md` defines what is in and out.
 - Wire contracts live in the shared workspace package `packages/contracts` (Zod schemas plus inferred types) and are used by both apps.
-- Tests: unit tests on backend processing (conflation, pressure and spread math, backpressure) and on the client store; no end-to-end tests.
+- Tests follow `testing-strategy.md`: unit, backend integration, protocol and contract tests, a stress test on the synthetic source, and a manual resilience run; no end-to-end or device-automation tests.
+- No performance or resilience claim appears anywhere unless it was measured and recorded in `docs/verification/`; telemetry tiles show measured values or are omitted.
+- Wire `timestamp` is milliseconds since epoch (server receive time), not the brief's example seconds; the README states the unit.
 
 ## Non-goals
 
@@ -92,7 +99,7 @@ Mandate: a Staff Engineer (Mobile Apps) take-home assessment. Evaluators judge t
 
 ## Success signal
 
-On the Android emulator, a reviewer watches all five pairs stream live at 100ms, opens a pair to see its order book animate, kills the backend and sees the app hold its last data and then recover on its own, all while the FPS readout stays at or above 55. Every scenario in `acceptance-demos.md` is shown in the screen recording.
+On the Android emulator, a reviewer watches all five pairs stream live at 100ms, opens a pair to see its order book animate, kills the backend and sees the app hold its last data and then recover on its own, all while the FPS readout stays at or above 55. Every scenario in `acceptance-demos.md` is shown in the screen recording, and `docs/verification/stress-results.md` shows 1000+ synthetic events/s coalesced to about 10 broadcasts/s with buffered state bounded by pair count and flat RSS.
 
 ## Assumptions
 
@@ -104,10 +111,7 @@ On the Android emulator, a reviewer watches all five pairs stream live at 100ms,
 - The Settings tab opens the same combined Telemetry & Settings screen shown in the PNG.
 - Test thresholds not set by the brief were chosen by the spec: data within 5s of start (CAP-1), a 60s stalled client (CAP-3), FPS ≥ 55 (CAP-12).
 - Watchlist 24h change uses the brief's arrow format (`▲ 1.82%` / `▼ 0.41%`).
-- The Q4 answer "use the default one" is read as the standard `stream.binance.com:9443` endpoint, kept configurable through environment config.
 
 ## Open Questions
 
-- Binance endpoint: confirm `stream.binance.com` (returns HTTP 451 to US IPs) versus `data-stream.binance.vision` as the default for reviewers.
-- Memory footprint tile: show the Hermes heap size if Expo Go exposes it, otherwise omit the tile?
 - What is the deadline or time budget? It affects how much of CAP-15 to build.
