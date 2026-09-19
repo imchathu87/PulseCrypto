@@ -24,7 +24,8 @@ does not expose the HTTP status (undici #3546, #3697, #3506).
 |---|---|---|
 | Base / cap | 1 s / 30 s: third party; retry storms risk bans | 0.5 s / 5 s: our local backend; the user is watching |
 | Attempt ends | First of `error` / `close` / `unexpected-response` / `UPSTREAM_CONNECT_TIMEOUT_MS` | First of `error` / `close` / heartbeat timeout |
-| Liveness | Silence watchdog from `open` (`UPSTREAM_SILENCE_MS`) | No message for `3 × heartbeatMs` (from `market.status`) |
+| Liveness | Silence watchdog from `open` (`UPSTREAM_SILENCE_MS`) | No message for `3 × heartbeatMs` (from `market.status`; default 5000) |
+| Server-side liveness | n/a (Binance pings us; `ws` answers) | Server pings every 15 s; no pong within 30 s → `terminate()`, counted `ws.clients.timedOut` |
 | Reset | After 60 s connected | After `DOWNSTREAM_STABLE_MS` past the first snapshot; `4008` never resets |
 | Extra | 24 h close handled as an ordinary close; 451 logged with `BINANCE_WS_URL` hint | `paused` on background (no retry); `active` → connect at once |
 | Outage effect | Downstream sockets stay open; all pairs stale | Last data kept; `RECONNECTING` |
@@ -52,4 +53,7 @@ once that generation is superseded.
 
 ## Status
 
-Accepted. Requirements: CAP-6, CAP-13, NFR-5.
+Accepted. Amended 2026-09-19 (human-approved): the server-side ping (engineering guide §6.8) detects
+half-open mobile sockets, so a dead session releases its timer without waiting for backpressure
+eviction. React Native answers pings natively; to be confirmed in the manual resilience run.
+Requirements: CAP-6, CAP-13, NFR-5.

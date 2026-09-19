@@ -1,7 +1,8 @@
 # PulseCrypto Architecture
 
 Status: accepted · 2026-09-19 · Decisions: [`adr/`](adr/) ADR-001 to ADR-012 ·
-Rules for agents: [`AGENTS.md`](../../AGENTS.md) · Scope: [`scope-boundaries.md`](scope-boundaries.md)
+Rules for agents: [`AGENTS.md`](../../AGENTS.md) · Scope: [`scope-boundaries.md`](scope-boundaries.md) ·
+Contracts: [`websocket-protocol.md`](../contracts/websocket-protocol.md), [`rest-api.md`](../contracts/rest-api.md)
 
 ## 0. Requirement IDs used here
 
@@ -65,10 +66,10 @@ Nominal upstream rate is 10 depth + 1 ticker frames/s per pair (Binance stream d
   empty side is valid. Invalid frames are dropped and counted in `upstream.frames.invalid` and never
   thrown past the adapter.
 - The domain applies events to `PairState` and derives values (ADR-007): `spread`, `buyPressure`,
-  `sellPressure` are `null` when a side is empty; 24h change is Binance `P`; `volume24h` is quote
+  `sellPressure` are `null` when a side is empty, and pressures are rounded to 2 dp; 24h change is Binance `P`; `volume24h` is quote
   volume `q`. Times are server receive clock: `lastDepthAt`, `lastTickerAt`, `timestamp` = the later.
 - `GET /pairs/meta` reads the same map for 24h high/low/volume (nullable before the first ticker).
-  `displayName` and `tradingStatus` come from static config, since the brief allows mocking; startup
+  `displayName`, `tradingStatus`, `pricePrecision` and `quantityPrecision` come from static config, since the brief allows mocking; startup
   fails if a `PAIRS` entry has no meta.
 - `GET /health` returns 200 whenever the process serves HTTP, with source, upstream state, uptime
   and counters (§8) in the body.
@@ -107,7 +108,7 @@ Two independent reconnect problems share one algorithm, with separate instances 
 |---|---|---|
 | States | `idle → connecting → connected → disconnected → reconnecting` | same + `paused` (backgrounded) |
 | Attempt ends on | First of `error`, `close`, `unexpected-response`, or `UPSTREAM_CONNECT_TIMEOUT_MS`; transitions idempotent | First of `error`, `close`, or heartbeat timeout |
-| Liveness | Silence watchdog from `open`: no frame for `UPSTREAM_SILENCE_MS` → terminate | No message for `3 × heartbeatMs` (from latest `market.status`; contract default before the first) |
+| Liveness | Silence watchdog from `open`: no frame for `UPSTREAM_SILENCE_MS` → terminate | No message for `3 × heartbeatMs` (from latest `market.status`; contract default before the first); server pings every 15 s and terminates after 30 s without a pong |
 | Backoff base / cap | 1 s / 30 s: a third party we do not control | 0.5 s / 5 s: our own local backend |
 | Reset | After 60 s connected | After `DOWNSTREAM_STABLE_MS` open past the first snapshot; a `4008` close never resets |
 | Extra | 24 h forced close is an ordinary close; HTTP 451 logged with a `BINANCE_WS_URL` hint | `AppState` background → `paused` (socket closed, no retry); `active` → `connecting` at once |
@@ -193,7 +194,7 @@ data visible across a backend restart *(CAP-13)*.
 
 - **Server**: integer counters in hot paths (`upstream.frames.{received,invalid}`,
   `upstream.connect.failed`, `upstream.reconnects`, `buffer.mutations`, `ws.frames.{sent,skipped}`,
-  `ws.clients.{active,evicted}`), plus `perf_hooks.monitorEventLoopDelay`, all exposed read-only on
+  `ws.clients.{active,evicted,timedOut}`), plus `perf_hooks.monitorEventLoopDelay`, all exposed read-only on
   `/health`. Hot paths do not log; pino logs state transitions only.
 - **Mobile**: JS FPS from a `requestAnimationFrame` counter; msgs/s counts `market.batch` and
   `market.snapshot` only. Both accumulate in refs and flush to `telemetryStore` at 1 Hz (ADR-010).
@@ -210,8 +211,11 @@ data visible across a backend restart *(CAP-13)*.
 | `MARKET_SOURCE` · `BINANCE_WS_URL` | `binance` · `wss://stream.binance.com:9443` | api, ADR-011 |
 | `PAIRS` | `BTCUSDT,ETHUSDT,SOLUSDT,DOGEUSDT,XRPUSDT` | api |
 | `BROADCAST_INTERVAL_MS` | `100` (client override `10..1000`) | api |
-| `STALE_AFTER_MS` · `UPSTREAM_SILENCE_MS` · `UPSTREAM_CONNECT_TIMEOUT_MS` · heartbeat | chosen in implementation, tuned in stress test | api |
-| `WS_SOFT_LIMIT_BYTES` · `WS_HARD_LIMIT_BYTES` · `SLOW_CLIENT_MAX_STALL_MS` | chosen in implementation, tuned in stress test | api |
+| `STALE_AFTER_MS` · `UPSTREAM_SILENCE_MS` · `UPSTREAM_CONNECT_TIMEOUT_MS` | chosen in implementation, tuned in stress test | api |
+| heartbeat | `5000` (`DEFAULT_HEARTBEAT_MS`, contracts) | api |
+| `WS_SOFT_LIMIT_BYTES` · `WS_HARD_LIMIT_BYTES` | `1048576` (1 MiB) · `8388608` (8 MiB); tuned in stress test | api |
+| `SLOW_CLIENT_MAX_STALL_MS` | chosen in implementation, tuned in stress test | api |
+| Downstream ping / pong timeout | 15 s / 30 s | api |
 | `SIMULATOR_RATE` | total events/s, split evenly across pairs, ≥ 1 depth per pair per 100 ms | api |
 | `EXPO_PUBLIC_API_URL` | unset → `http://10.0.2.2:8080` (Android), `http://localhost:8080` (iOS) | mobile |
 

@@ -19,7 +19,7 @@ over the specific high-value ones listed below.
 ## Backend unit tests
 
 - Market normalization from each upstream stream shape (depth, ticker).
-- Buy/sell pressure calculation, including the zero-depth case.
+- Buy/sell pressure calculation, including the zero-depth case and 2-decimal rounding.
 - Spread calculation, including the empty-book-side case.
 - Latest-value replacement semantics.
 - Revision counter increments on mutation.
@@ -52,6 +52,7 @@ normalization and the buffer to a real downstream WebSocket client:
 - `market.status` reports `upstream.connected: false` within the heartbeat window after the
   upstream adapter drops, while the downstream socket stays open.
 - `spread` and `buyPressure` are `null` — not `0`, not `50` — when a book side is empty.
+- A client that stops answering pings is terminated after 30 s and counted in `ws.clients.timedOut`.
 
 ## Mobile tests
 
