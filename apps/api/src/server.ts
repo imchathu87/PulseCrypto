@@ -1,6 +1,9 @@
 import Fastify from 'fastify';
 import websocket from '@fastify/websocket';
-import { MarketSnapshotSchema, type MarketSnapshot } from '@pulsecrypto/contracts';
+import {
+  MarketBatchMessageSchema,
+  type PairSnapshot,
+} from '@pulsecrypto/contracts';
 
 const BINANCE_URL =
   'wss://stream.binance.com:9443/stream?streams=btcusdt@depth20@100ms/btcusdt@ticker';
@@ -14,6 +17,7 @@ app.get('/ws', { websocket: true }, () => {});
 
 const seenStreams = new Set<string>();
 const upstream = new WebSocket(BINANCE_URL);
+let rev = 0;
 
 upstream.onmessage = (event) => {
   const { stream, data } = JSON.parse(event.data);
@@ -29,12 +33,32 @@ upstream.onmessage = (event) => {
   // Depth payload has no symbol or event time, so only the ticker maps to a snapshot.
   if (stream !== 'btcusdt@ticker') return;
 
-  const snapshot: MarketSnapshot = MarketSnapshotSchema.parse({
+  const now = Date.now();
+  rev += 1;
+  const snapshot: PairSnapshot = {
     pair: data.s,
+    rev,
+    timestamp: now,
+    lastDepthAt: null,
+    lastTickerAt: now,
     price: Number(data.c),
-    lastUpdated: data.E,
+    change24hPct: Number(data.P),
+    high24h: Number(data.h),
+    low24h: Number(data.l),
+    volume24h: Number(data.q),
+    bids: [],
+    asks: [],
+    spread: null,
+    buyPressure: null,
+    sellPressure: null,
+  };
+  const batch = MarketBatchMessageSchema.parse({
+    v: 1,
+    type: 'market.batch',
+    t: now,
+    pairs: [snapshot],
   });
-  const message = JSON.stringify(snapshot);
+  const message = JSON.stringify(batch);
   for (const client of app.websocketServer.clients) client.send(message);
 };
 
