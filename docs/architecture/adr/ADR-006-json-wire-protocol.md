@@ -27,9 +27,10 @@ per interval.
   from static config next to `displayName`; the wire never rounds prices or quantities.
 - Schemas use Zod's default `.strip()`. Additive fields are non-breaking and do not bump `v`.
 - `packages/contracts` (Zod 4.6.5) holds the schemas, `DISPLAY_LEVELS = 10`, `MAX_LEVELS = 20`,
-  the default heartbeat, and `decodeServerMessage(raw: unknown)`. The decoder is the **only** place
-  a server message is typed without a full parse. It full-parses in `__DEV__` and envelope-parses
-  in production (engineering-standards §6).
+  the default heartbeat, and `decodeServerMessage(raw: unknown, mode: 'full' | 'envelope')`. The
+  decoder is the **only** place a server message is typed without a full parse. The caller picks the
+  mode: the mobile app passes `'full'` in `__DEV__` and `'envelope'` in production
+  (engineering-standards §6). Contracts reads no platform global, so both modes are testable in Vitest.
 - `docs/contracts/websocket-protocol.md` is the single field reference, and the README links to it.
   `docs/contracts/rest-api.md` is the REST equivalent.
   Schema, document and tests change together.
@@ -55,4 +56,7 @@ per interval.
 
 Accepted (JSON adopted; message set defined here). Amended 2026-09-19 (human-approved): `pricePrecision`
 and `quantityPrecision` added to `/pairs/meta`, an additive change with no `v` bump. The production envelope-only decode is the
-explicit exception recorded in AGENTS.md (approved 2026-09-19). Requirements: CAP-4, CAP-5, NFR-2, NFR-6.
+explicit exception recorded in AGENTS.md (approved 2026-09-19). Amended 2026-09-19 (human-approved,
+sprint-planning readiness gate): `decodeServerMessage` takes the parse mode as a parameter instead of
+reading `__DEV__`, because `packages/contracts` holds no platform globals or module state; the
+production behaviour is unchanged. Requirements: CAP-4, CAP-5, NFR-2, NFR-6.
